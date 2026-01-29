@@ -1,0 +1,238 @@
+{
+  "id": "ddcolor-timecode-removal-and-colorization",
+  "revision": 0,
+  "last_node_id": 8,
+  "last_link_id": 10,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "VHS_LoadVideoFFmpegPath",
+      "pos": [-400, 100],
+      "size": [350, 400],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {"name": "meta_batch", "shape": 7, "type": "VHS_BatchManager", "link": null},
+        {"name": "vae", "shape": 7, "type": "VAE", "link": null},
+        {"name": "video", "type": "STRING", "widget": {"name": "video"}, "link": null},
+        {"name": "force_rate", "type": "FLOAT", "widget": {"name": "force_rate"}, "link": null},
+        {"name": "custom_width", "type": "INT", "widget": {"name": "custom_width"}, "link": null},
+        {"name": "custom_height", "type": "INT", "widget": {"name": "custom_height"}, "link": null},
+        {"name": "frame_load_cap", "type": "INT", "widget": {"name": "frame_load_cap"}, "link": null},
+        {"name": "start_time", "type": "FLOAT", "widget": {"name": "start_time"}, "link": null},
+        {"name": "format", "shape": 7, "type": "COMBO", "widget": {"name": "format"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [1, 2]},
+        {"name": "mask", "type": "MASK", "links": null},
+        {"name": "audio", "type": "AUDIO", "links": [10]},
+        {"name": "video_info", "type": "VHS_VIDEOINFO", "links": null}
+      ],
+      "title": "Load B&W Video with Timecode",
+      "properties": {"Node name for S&R": "VHS_LoadVideoFFmpegPath"},
+      "widgets_values": {
+        "video": "path/to/your/video_with_timecode.mp4",
+        "force_rate": 24,
+        "custom_width": 856,
+        "custom_height": 640,
+        "frame_load_cap": 0,
+        "start_time": 0,
+        "format": "Wan",
+        "videopreview": {"hidden": false, "paused": false}
+      }
+    },
+    {
+      "id": 2,
+      "type": "polymath_text_mask",
+      "pos": [20, -100],
+      "size": [320, 200],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 1}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "slot_index": 0, "links": [3]}
+      ],
+      "title": "OCR Text Mask (Timecode Detection)",
+      "properties": {"Node name for S&R": "polymath_text_mask"},
+      "widgets_values": ["English", 0.7, true, 51, 20, 10, 11],
+      "color": "#9968f3",
+      "bgcolor": "#519b36"
+    },
+    {
+      "id": 3,
+      "type": "GrowMask",
+      "pos": [20, 150],
+      "size": [250, 100],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {"name": "mask", "type": "MASK", "link": 3},
+        {"name": "expand", "type": "INT", "widget": {"name": "expand"}, "link": null},
+        {"name": "tapered_corners", "type": "BOOLEAN", "widget": {"name": "tapered_corners"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "slot_index": 0, "links": [4]}
+      ],
+      "title": "Grow Mask (Buffer Zone)",
+      "properties": {"Node name for S&R": "GrowMask"},
+      "widgets_values": [34, true]
+    },
+    {
+      "id": 4,
+      "type": "ProPainterInpaint",
+      "pos": [350, 0],
+      "size": [380, 350],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 2},
+        {"name": "mask", "type": "MASK", "link": 4},
+        {"name": "width", "type": "INT", "widget": {"name": "width"}, "link": null},
+        {"name": "height", "type": "INT", "widget": {"name": "height"}, "link": null},
+        {"name": "mask_dilates", "type": "INT", "widget": {"name": "mask_dilates"}, "link": null},
+        {"name": "flow_mask_dilates", "type": "INT", "widget": {"name": "flow_mask_dilates"}, "link": null},
+        {"name": "ref_stride", "type": "INT", "widget": {"name": "ref_stride"}, "link": null},
+        {"name": "neighbor_length", "type": "INT", "widget": {"name": "neighbor_length"}, "link": null},
+        {"name": "subvideo_length", "type": "INT", "widget": {"name": "subvideo_length"}, "link": null},
+        {"name": "raft_iter", "type": "INT", "widget": {"name": "raft_iter"}, "link": null},
+        {"name": "fp16", "type": "COMBO", "widget": {"name": "fp16"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [5]},
+        {"name": "FLOW_MASK", "type": "MASK", "links": null},
+        {"name": "MASK_DILATE", "type": "MASK", "links": null}
+      ],
+      "title": "ProPainter Flow-Guided Inpainting",
+      "properties": {"Node name for S&R": "ProPainterInpaint"},
+      "widgets_values": [645, 480, 47, 34, 18, 13, 219, 38, "enable"]
+    },
+    {
+      "id": 5,
+      "type": "DDColor_Colorize",
+      "pos": [800, 100],
+      "size": [300, 130],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 5}
+      ],
+      "outputs": [
+        {"name": "colorized_image", "type": "IMAGE", "slot_index": 0, "links": [6, 7]}
+      ],
+      "title": "DDColor Colorize",
+      "properties": {"Node name for S&R": "DDColor_Colorize"},
+      "widgets_values": [512, "ddcolor_paper.pth"],
+      "color": "#2a5d3b",
+      "bgcolor": "#3f7959"
+    },
+    {
+      "id": 6,
+      "type": "PreviewImage",
+      "pos": [1150, -100],
+      "size": [300, 300],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 6}
+      ],
+      "outputs": [],
+      "title": "Preview Colorized Result",
+      "properties": {"Node name for S&R": "PreviewImage"}
+    },
+    {
+      "id": 7,
+      "type": "VHS_VideoCombine",
+      "pos": [1150, 250],
+      "size": [300, 400],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 7},
+        {"name": "audio", "shape": 7, "type": "AUDIO", "link": 10},
+        {"name": "meta_batch", "shape": 7, "type": "VHS_BatchManager", "link": null},
+        {"name": "vae", "shape": 7, "type": "VAE", "link": null},
+        {"name": "frame_rate", "type": "FLOAT", "widget": {"name": "frame_rate"}, "link": null},
+        {"name": "loop_count", "type": "INT", "widget": {"name": "loop_count"}, "link": null},
+        {"name": "filename_prefix", "type": "STRING", "widget": {"name": "filename_prefix"}, "link": null},
+        {"name": "format", "type": "COMBO", "widget": {"name": "format"}, "link": null},
+        {"name": "pingpong", "type": "BOOLEAN", "widget": {"name": "pingpong"}, "link": null},
+        {"name": "save_output", "type": "BOOLEAN", "widget": {"name": "save_output"}, "link": null},
+        {"name": "pix_fmt", "type": ["yuv420p", "yuv420p10le"], "widget": {"name": "pix_fmt"}, "link": null},
+        {"name": "crf", "type": "INT", "widget": {"name": "crf"}, "link": null},
+        {"name": "save_metadata", "type": "BOOLEAN", "widget": {"name": "save_metadata"}, "link": null},
+        {"name": "trim_to_audio", "type": "BOOLEAN", "widget": {"name": "trim_to_audio"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "Filenames", "type": "VHS_FILENAMES", "links": null}
+      ],
+      "title": "Output Colorized Video (H.264)",
+      "properties": {"Node name for S&R": "VHS_VideoCombine"},
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "colorized_no_timecode",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {"hidden": false, "paused": false}
+      }
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "IMAGE"],
+    [2, 1, 0, 4, 0, "IMAGE"],
+    [3, 2, 0, 3, 0, "MASK"],
+    [4, 3, 0, 4, 1, "MASK"],
+    [5, 4, 0, 5, 0, "IMAGE"],
+    [6, 5, 0, 6, 0, "IMAGE"],
+    [7, 5, 0, 7, 0, "IMAGE"],
+    [10, 1, 2, 7, 1, "AUDIO"]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Step 1: Load Video",
+      "bounding": [-450, -50, 400, 500],
+      "color": "#3f789e",
+      "font_size": 18,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Step 2: Detect & Remove Timecode",
+      "bounding": [-20, -150, 750, 550],
+      "color": "#8b5e3c",
+      "font_size": 18,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Step 3: Colorize & Export",
+      "bounding": [750, -150, 750, 850],
+      "color": "#3c6e47",
+      "font_size": 18,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [500, 200]
+    }
+  },
+  "version": 0.4
+}
